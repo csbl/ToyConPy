@@ -56,13 +56,15 @@ print 'Objective Reaction is: '
 print toycon1_rxn_info[toycon1_rxn_info.rxn_id == 'R4'].rxn_id + '  ' + toycon1_rxn_info[toycon1_rxn_info.rxn_id == 'R4'].rxn_formula
 
 def sign(x):
+    ma = max(x)
+    mi = min(x)
     result = []
     for y in x:
-        if not y == 0:
-            result.append(numpy.random.normal(0,1))
+        if(y > 0):
+            result.append(1)
         else:
-            result.append(0)
-    return numpy.random.uniform(0,1,len(x))
+            result.append(.5)
+    return result
 def rxnIDCon(x):
     result = []
     value = 0
@@ -71,31 +73,32 @@ def rxnIDCon(x):
         if y.startswith('R') == 1:
             value +=4
 
-toycon1_rxn_decomposition2 = toycon1_rxn_decomposition.copy()
-toycon1_rxn_decomposition2['sign'] = pandas.Series(sign(toycon1_rxn_decomposition['coeff'].values),index = toycon1_rxn_decomposition2.index)
+
 rxnUniques,temp=numpy.unique(toycon1_rxn_decomposition['rxn_id'].values,return_inverse=True)
-toycon1_rxn_decomposition2['rxn_id'] = pandas.Series(temp.copy(),index = toycon1_rxn_decomposition.index)
-metUniques,temp=numpy.unique(toycon1_rxn_decomposition['met_name'].values,return_inverse=True)
-toycon1_rxn_decomposition2['met_name'] = pandas.Series(temp.copy(),index = toycon1_rxn_decomposition.index)
+metUniques,temp2=numpy.unique(toycon1_rxn_decomposition['met_name'].values,return_inverse=True)
+rxnID2Name = pandas.Series(toycon1_rxn_info.rxn_name.values,index = toycon1_rxn_info.rxn_id).to_dict()
+print rxnID2Name
+print rxnUniques
 
-print toycon1_rxn_decomposition2['sign']
-print toycon1_rxn_decomposition2['rxn_id']
-print toycon1_rxn_decomposition2['met_name']
+toycon1_rxn_decomposition2 = pandas.DataFrame({
+    'w' : sign(toycon1_rxn_decomposition['coeff'].values),
+    'y' : temp2,
+    'x' : temp,
+    'l' : toycon1_rxn_decomposition['coeff'].values
+})
 
-p = ggplot(toycon1_rxn_decomposition2,aes(x='rxn_id',y='met_name',fill='sign'))+geom_tile(fill='sign')
-#p = p+geom_text(size = 2,color = "black")+scale_color_gradient(low= 'grey',high = 'blue')
-p.show()
 
-df = pandas.DataFrame(dict(
-    x=numpy.random.normal(0, 1, 1000),
-    y=numpy.random.normal(0, 1, 1000),
-    w=numpy.random.uniform(0, 1, 1000)
-))
-print toycon1_rxn_decomposition2.head()
-print df['w']
-p = ggplot(df, aes(x='x', y='y', fill='w')) + geom_tile(fill= 'w')
-p.show()
-#p = p + geom_tile
+p = ggplot(toycon1_rxn_decomposition2,aes(x='x',y='y',fill='w',label = 'l'))+geom_tile(xbins = len(rxnUniques)+1, ybins = len(metUniques)+1,fill='w')
+p = p + xlim(0,max(toycon1_rxn_decomposition2['x'])) + scale_x_continuous(breaks = range(len(rxnUniques)),labels = list(rxnUniques))
+p = p + ylim(0,max(toycon1_rxn_decomposition2['y'])) + scale_y_continuous(breaks = range(len(metUniques)),labels = list(metUniques))
+p = p + xlab(' ') + ylab(' ') +theme(x_axis_text=element_text(angle=45,hjust=1))
+p= p #+ scale_fill_identity()
+p.xtick_labels = [rxnID2Name[x] for x in rxnUniques]
+#p.apply_scales()
+p.xbreaks = range(len(rxnUniques))
+p.apply_axis_labels
+print p
+
 
 
 
