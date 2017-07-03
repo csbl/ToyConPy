@@ -8,6 +8,7 @@ from ggplot import *
 import matplotlib.pyplot as plt
 import matplotlib.axes
 import matplotlib.colors
+from matplotlib.backends.backend_pdf import PdfPages
 
 model = cobra.io.read_sbml_model('ToyCon.xml')#Read in toycon model
 model.solver = 'gurobi' #set solver
@@ -99,7 +100,7 @@ toycon1_rxn_decomposition2 = pandas.DataFrame({
     'l' : toycon1_rxn_decomposition['coeff'].values
 })
 
-
+fig = plt.figure()
 counts, xedge, yedge, imag = plt.hist2d(bins = [len(rxnUniques),len(metUniques)],x=toycon1_rxn_decomposition2['x'].values,y=toycon1_rxn_decomposition2['y'].values,normed = False,weights = toycon1_rxn_decomposition2['w'].values,cmap = matplotlib.colors.LinearSegmentedColormap.from_list("custom",[(0,'White'),(.5,'Blue'),(1,'Red')]))
 plt.yticks(range(len(metUniques)),[int2metName[x] for x in range(len(metUniques))])
 plt.xticks(range(len(rxnUniques)),[rxnID2Name[x] for x in rxnUniques],rotation = 45)
@@ -107,7 +108,9 @@ plt.xticks(range(len(rxnUniques)),[rxnID2Name[x] for x in rxnUniques],rotation =
 plt.subplots_adjust(bottom = .25)
 plt.tick_params(axis = u'both',which = u'both',length = 0)
 plt.show()
-
+pp = PdfPages('toycon1_smatrix.pdf')
+pp.savefig(fig)
+pp.close()
 
 
 
