@@ -19,8 +19,8 @@ CO2 = Metabolite('m03c',name = 'CO2',compartment='c')
 adp = Metabolite('m01c',name = 'ADP',compartment='c')
 pi = Metabolite('m09c',name = 'Pi',compartment='c')
 atp = Metabolite('m02c',name = 'ATP',compartment='c')
-Hm = Metabolite('m05m',name = 'H(m)',compartment='m')
-Hc = Metabolite('m05c',name = 'H(c)',compartment='c')
+Hm = Metabolite('m05m',name = 'H',compartment='m')
+Hc = Metabolite('m05c',name = 'H',compartment='c')
 
 
 reaction.add_metabolites({   #add the glucose metabolite to the reaction with stoichiometric coefficient

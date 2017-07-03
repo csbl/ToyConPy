@@ -5,6 +5,9 @@ import pandas
 import csv
 import ggplot
 from ggplot import *
+import matplotlib.pyplot as plt
+import matplotlib.axes
+import matplotlib.colors
 
 model = cobra.io.read_sbml_model('ToyCon.xml')#Read in toycon model
 model.solver = 'gurobi' #set solver
@@ -74,38 +77,38 @@ def rxnIDCon(x):
             value +=4
 
 
-rxnUniques,temp=numpy.unique(toycon1_rxn_decomposition['rxn_id'].values,return_inverse=True)
-metUniques,temp2=numpy.unique(toycon1_rxn_decomposition['met_name'].values,return_inverse=True)
+rxnUniques,indexRxn,invRxn=numpy.unique(toycon1_rxn_decomposition['rxn_id'].values,return_inverse=True,return_index=True,)
+metUniques,indexMet,invMet=numpy.unique(toycon1_rxn_decomposition['met_name'].values,return_inverse=True,return_index=True)
+
+
 rxnID2Name = pandas.Series(toycon1_rxn_info.rxn_name.values,index = toycon1_rxn_info.rxn_id).to_dict()
-print rxnID2Name
-print rxnUniques
+metName2int = pandas.Series([(len(model.metabolites)-1) - x for x in range(len(model.metabolites))],index = [x.name+'['+x.compartment+']' for x in model.metabolites]).to_dict()
+int2metName = pandas.Series([x.name+'['+x.compartment+']' for x in model.metabolites],index = [(len(model.metabolites)-1) - x for x in range(len(model.metabolites))]).to_dict()
+
+print metName2int
+yCor = [metName2int[x] for x in toycon1_rxn_decomposition['met_name'].values]
+
+print metName2int
+coloring = {.5 : 'b',1:'r'}
+
 
 toycon1_rxn_decomposition2 = pandas.DataFrame({
     'w' : sign(toycon1_rxn_decomposition['coeff'].values),
-    'y' : temp2,
-    'x' : temp,
+    'y' : yCor,
+    'x' : invRxn,
     'l' : toycon1_rxn_decomposition['coeff'].values
 })
 
 
-p = ggplot(toycon1_rxn_decomposition2,aes(x='x',y='y',fill='w',label = 'l'))+geom_tile(xbins = len(rxnUniques)+1, ybins = len(metUniques)+1,fill='w')
-p = p + xlim(0,max(toycon1_rxn_decomposition2['x'])) + scale_x_continuous(breaks = range(len(rxnUniques)),labels = list(rxnUniques))
-p = p + ylim(0,max(toycon1_rxn_decomposition2['y'])) + scale_y_continuous(breaks = range(len(metUniques)),labels = list(metUniques))
-p = p + xlab(' ') + ylab(' ') +theme(x_axis_text=element_text(angle=45,hjust=1))
-p= p #+ scale_fill_identity()
-p.xtick_labels = [rxnID2Name[x] for x in rxnUniques]
-#p.apply_scales()
-p.xbreaks = range(len(rxnUniques))
-p.apply_axis_labels
-print p
+counts, xedge, yedge, imag = plt.hist2d(bins = [len(rxnUniques),len(metUniques)],x=toycon1_rxn_decomposition2['x'].values,y=toycon1_rxn_decomposition2['y'].values,normed = False,weights = toycon1_rxn_decomposition2['w'].values,cmap = matplotlib.colors.LinearSegmentedColormap.from_list("custom",[(0,'White'),(.5,'Blue'),(1,'Red')]))
+plt.yticks(range(len(metUniques)),[int2metName[x] for x in range(len(metUniques))])
+plt.xticks(range(len(rxnUniques)),[rxnID2Name[x] for x in rxnUniques],rotation = 45)
+[plt.text(xedge[x]+.5,yedge[y]+.5,l,color = 'White',ha = 'center', va = 'center') for x,y,l in zip(toycon1_rxn_decomposition2['x'].values,toycon1_rxn_decomposition2['y'].values,toycon1_rxn_decomposition2['l'].values)]
+plt.subplots_adjust(bottom = .25)
+plt.tick_params(axis = u'both',which = u'both',length = 0)
+plt.show()
 
 
 
 
-"""
-plotPar = aes(x = 'rxn_name', y = 'met_name', fill = numpy.sign(coef), label = coef)) + geom_tile() +
-geom_text(size = 2, color = "#FFFFFF") + scale_fill_gradient2(low = "#4F81BD", mid = "#FFFFFF", high = "#C0504D") +
-theme_minimal(base_size = 12) + theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + xlab(NULL) + ylab(NULL)
-#ggplot(
-numpy.sign"""
 

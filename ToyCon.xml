@@ -33,8 +33,8 @@
       <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_m01c" name="ADP" compartment="c"/>
       <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_m09c" name="Pi" compartment="c"/>
       <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_m02c" name="ATP" compartment="c"/>
-      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_m05c" name="H(c)" compartment="c"/>
-      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_m05m" name="H(m)" compartment="m"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_m05m" name="H" compartment="m"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_m05c" name="H" compartment="c"/>
     </listOfSpecies>
     <fbc:listOfGeneProducts>
       <fbc:geneProduct fbc:id="G_HK" fbc:label="HK" fbc:name="HK"/>
