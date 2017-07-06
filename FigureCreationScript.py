@@ -89,7 +89,7 @@ int2metName = pandas.Series([x.name+'['+x.compartment+']' for x in model.metabol
 #create y coordinates for table from metabolic names
 yCor = [metName2int[x] for x in toycon1_rxn_decomposition['met_name'].values]
 #set coloring scheme
-coloring = {.5 : 'b',1:'r'}
+coloring = {.5 : 'dodgerblue',1:'firebrick'}
 
 #create data
 toycon1_rxn_decomposition2 = pandas.DataFrame({
@@ -100,7 +100,7 @@ toycon1_rxn_decomposition2 = pandas.DataFrame({
 })
 
 fig = plt.figure()  ##Create S matrix figure and save as a pdf
-counts, xedge, yedge, imag = plt.hist2d(bins = [len(rxnUniques),len(metUniques)],x=toycon1_rxn_decomposition2['x'].values,y=toycon1_rxn_decomposition2['y'].values,normed = False,weights = toycon1_rxn_decomposition2['w'].values,cmap = matplotlib.colors.LinearSegmentedColormap.from_list("custom",[(0,'White'),(.5,'Blue'),(1,'Red')]))
+counts, xedge, yedge, imag = plt.hist2d(bins = [len(rxnUniques),len(metUniques)],x=toycon1_rxn_decomposition2['x'].values,y=toycon1_rxn_decomposition2['y'].values,normed = False,weights = toycon1_rxn_decomposition2['w'].values,cmap = matplotlib.colors.LinearSegmentedColormap.from_list("custom",[(0,'White'),(.5,'dodgerblue'),(1,'firebrick')]))
 plt.yticks(range(len(metUniques)),[int2metName[x] for x in range(len(metUniques))])
 plt.xticks(range(len(rxnUniques)),[rxnID2Name[x] for x in rxnUniques],rotation = 45)
 [plt.text(xedge[x]+.5,yedge[y]+.5,l,color = 'White',ha = 'center', va = 'center') for x,y,l in zip(toycon1_rxn_decomposition2['x'].values,toycon1_rxn_decomposition2['y'].values,toycon1_rxn_decomposition2['l'].values)]
@@ -152,11 +152,11 @@ fva_pct_result.to_csv('toycon1_fva_result_percentage.txt',sep= ' ',float_format=
 
 def coloring(on,req):
     if on and req:
-        return "Red"
+        return "firebrick"
     if not req and on:
         return "Grey"
     else:
-        return "Blue"
+        return "dodgerblue"
 #### Make fva_percentage plot
 
 fig = plt.figure()
