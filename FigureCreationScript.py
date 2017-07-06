@@ -114,8 +114,8 @@ def ef_tbl_fva(pct,model,tbl = None):
     ub = fvaRes.maximum.values
     lb = fvaRes.minimum.values
     n = len(ub)
-    tbl.insert(1,'fva_lb', ub)
-    tbl.insert(2,'fva_ub', lb)
+    tbl.insert(1,'fva_lb', lb)
+    tbl.insert(2,'fva_ub', ub)
     tbl['fva_pct'] = list([int(z+pct*100) for z in numpy.zeros((n,1),numpy.int64)])
     def fva_req(u,l):
         result = []
@@ -138,10 +138,36 @@ def ef_tbl_fva(pct,model,tbl = None):
     return tbl
 
 fva_pct_result = ef_tbl_fva(0,model,toycon1_rxn_info)
-for x in [(y+1)*.5 for y in range(20)]:
-    fva_pct_result = fva_pct_result.append(ef_tbl_fva(0,model,toycon1_rxn_info),ignore_index = True)
+for x in [(y+1)*.05 for y in range(20)]:
+    fva_pct_result = fva_pct_result.append(ef_tbl_fva(x,model,toycon1_rxn_info),ignore_index = True)
 fva_pct_result = fva_pct_result.sort_values(by = 'rxn_id')
 fva_pct_result = fva_pct_result.reset_index(drop=True)
 print fva_pct_result
-fva_pct_result.to_csv('toycon1_fva_result_percentage.txt',float_format='%d', quoting = csv.QUOTE_NONE,escapechar=' ',index = False)#output fva result
+fva_pct_result.to_csv('toycon1_fva_result_percentage.txt',sep= ' ',float_format='%.2f', quoting = csv.QUOTE_NONE,escapechar=' ',index = False)#output fva result
+
+#### Make fva_percentage plot
+
+#fva_pct_resultTemp = fva_pct_result['rxn_id'] == 'R1'
+#print fva_pct_resultTemp.head()
+fig = plt.figure()
+toPlot = ['R1','R2']
+i =1
+for z in toPlot:
+    plt.subplot(1,2,i)
+    xcoordl = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_lb'].values
+    xcoordu = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_ub'].values
+    ycoord = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_pct'].values
+    plt.xlabel("Units of Flux Through Reaction")
+    plt.ylabel("Required Flux Through Obj. Fun.")
+    plt.title(rxnID2Name[z])
+    plt.scatter(xcoordl,ycoord,color = "Red",marker="s")
+    plt.scatter(xcoordu,ycoord,color = "Red",marker = "D")
+    plt.hlines(ycoord,xcoordl,xcoordu,color = "Red")
+    i +=1
+fig.tight_layout()
+pp = PdfPages('toycon1_fva_percentage.pdf')
+pp.savefig(fig)
+pp.close()
+###through line 213
+
 
