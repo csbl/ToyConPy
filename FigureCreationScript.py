@@ -1,8 +1,10 @@
 """This python script generates pdf documents that contain the figures associated with the ToyCon1 model. Such figures
 are summaries of the reactions, genes, and simulations performed (gene KOs, FVA). Running this script requires that
 the following packages are installed:
-    COBRApy
+    COBRApy (made in v6.1)
+    smbl
     numpy
+    scipy
     pandas
     csv
     matplotlib
@@ -76,7 +78,6 @@ def sign(x):
         else:
             result.append(.5)
     return result
-#toycon1_rxn_decomposition.sort_values(by=[])
 #create indexing for rxn_id and met_name
 rxnUniques,indexRxn,invRxn=numpy.unique(toycon1_rxn_decomposition['rxn_id'].values,return_inverse=True,return_index=True,)
 metUniques,indexMet,invMet=numpy.unique(toycon1_rxn_decomposition['met_name'].values,return_inverse=True,return_index=True)
@@ -100,13 +101,16 @@ toycon1_rxn_decomposition2 = pandas.DataFrame({
 })
 
 fig = plt.figure()  ##Create S matrix figure and save as a pdf
+#Create 2D histogram from metabolites and reactions
 counts, xedge, yedge, imag = plt.hist2d(bins = [len(rxnUniques),len(metUniques)],x=toycon1_rxn_decomposition2['x'].values,y=toycon1_rxn_decomposition2['y'].values,normed = False,weights = toycon1_rxn_decomposition2['w'].values,cmap = matplotlib.colors.LinearSegmentedColormap.from_list("custom",[(0,'White'),(.5,'dodgerblue'),(1,'firebrick')]))
+#format axis labels and ticks
 plt.yticks(range(len(metUniques)),[int2metName[x] for x in range(len(metUniques))])
 plt.xticks(range(len(rxnUniques)),[rxnID2Name[x] for x in rxnUniques],rotation = 45)
+#add the coefficient as the label
 [plt.text(xedge[x]+.5,yedge[y]+.5,l,color = 'White',ha = 'center', va = 'center') for x,y,l in zip(toycon1_rxn_decomposition2['x'].values,toycon1_rxn_decomposition2['y'].values,toycon1_rxn_decomposition2['l'].values)]
 plt.subplots_adjust(bottom = .25)
 plt.tick_params(axis = u'both',which = u'both',length = 0)
-pp = PdfPages('toycon1_smatrix.pdf')
+pp = PdfPages('toycon1_smatrix.pdf') #save figure
 pp.savefig(fig)
 pp.close()
 
@@ -114,14 +118,14 @@ pp.close()
 
 def ef_tbl_fva(pct,model,tbl = None):
     tbl = tbl.copy()
-    fvaRes = cobra.flux_analysis.flux_variability_analysis(model,model.reactions[:],fraction_of_optimum=pct)
+    fvaRes = cobra.flux_analysis.flux_variability_analysis(model,model.reactions[:],fraction_of_optimum=pct) #perform FVA
     ub = fvaRes.maximum.values
-    lb = fvaRes.minimum.values
+    lb = fvaRes.minimum.values #gather bounds
     n = len(ub)
     tbl.insert(1,'fva_lb', lb)
-    tbl.insert(2,'fva_ub', ub)
-    tbl['fva_pct'] = list([int(z+pct*100) for z in numpy.zeros((n,1),numpy.int64)])
-    def fva_req(u,l):
+    tbl.insert(2,'fva_ub', ub) #insert bounds into the dataframe
+    tbl['fva_pct'] = list([int(z+pct*100) for z in numpy.zeros((n,1),numpy.int64)]) #insert percentage of obj. fun. into dataframe
+    def fva_req(u,l): #Function to determine if FVA is required
         result = []
         for x,y in zip(u,l):
             if y > 1*10**-9 or x < -1*10**-9:
@@ -129,8 +133,8 @@ def ef_tbl_fva(pct,model,tbl = None):
             else:
                 result.append(False)
         return result
-    tbl['fva_req'] = fva_req(ub,lb)
-    def fva_on(u, l):
+    tbl['fva_req'] = fva_req(ub,lb) #insert column with the determination
+    def fva_on(u, l): #determine if FVA is on (not sure what this means) TODO
         result = []
         for x, y in zip(u, l):
             if abs(y) > 1 * 10 ** -9 or abs(x) > 1 * 10 ** -9:
@@ -141,15 +145,16 @@ def ef_tbl_fva(pct,model,tbl = None):
     tbl['fva_on'] = fva_on(ub,lb)
     return tbl
 
-fva_pct_result = ef_tbl_fva(0,model,toycon1_rxn_info)
+fva_pct_result = ef_tbl_fva(0,model,toycon1_rxn_info)#perform unconstrained FBA for initial point
 for x in [(y+1)*.05 for y in range(20)]:
-    fva_pct_result = fva_pct_result.append(ef_tbl_fva(x,model,toycon1_rxn_info),ignore_index = True)
-fva_pct_result = fva_pct_result.sort_values(by = 'rxn_id')
+    fva_pct_result = fva_pct_result.append(ef_tbl_fva(x,model,toycon1_rxn_info),ignore_index = True) #perform FVA for 5-100% of obj. fun.
+fva_pct_result = fva_pct_result.sort_values(by = 'rxn_id') #sort results by rxn_id
 fva_pct_result = fva_pct_result.reset_index(drop=True)
-print fva_pct_result.head()
+print fva_pct_result.head() #print first few lines
+#output result to text file
 fva_pct_result.to_csv('toycon1_fva_result_percentage.txt',sep= ' ',float_format='%.2f', quoting = csv.QUOTE_NONE,escapechar=' ',index = False)#output fva result
 
-
+#coloring function
 def coloring(on,req):
     if on and req:
         return "firebrick"
