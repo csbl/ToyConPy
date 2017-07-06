@@ -142,7 +142,7 @@ for x in [(y+1)*.05 for y in range(20)]:
     fva_pct_result = fva_pct_result.append(ef_tbl_fva(x,model,toycon1_rxn_info),ignore_index = True)
 fva_pct_result = fva_pct_result.sort_values(by = 'rxn_id')
 fva_pct_result = fva_pct_result.reset_index(drop=True)
-print fva_pct_result
+print fva_pct_result.head()
 fva_pct_result.to_csv('toycon1_fva_result_percentage.txt',sep= ' ',float_format='%.2f', quoting = csv.QUOTE_NONE,escapechar=' ',index = False)#output fva result
 
 #### Make fva_percentage plot
@@ -159,6 +159,7 @@ for z in toPlot:
     ycoord = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_pct'].values
     plt.xlabel("Units of Flux Through Reaction")
     plt.ylabel("Required Flux Through Obj. Fun.")
+    plt.xlim(0.0,2.0)
     plt.title(rxnID2Name[z])
     plt.scatter(xcoordl,ycoord,color = "Red",marker="s")
     plt.scatter(xcoordu,ycoord,color = "Red",marker = "D")
@@ -170,4 +171,95 @@ pp.savefig(fig)
 pp.close()
 ###through line 213
 
+fva_inc_result = ef_tbl_fva(0,model,toycon1_rxn_info)
+for x in [(y+1)/16. for y in range(16)]:
+    fva_inc_result = fva_inc_result.append(ef_tbl_fva(x,model,toycon1_rxn_info),ignore_index = True)
+fva_inc_result = fva_inc_result.sort_values(by = 'rxn_id')
+fva_inc_result = fva_inc_result.reset_index(drop=True)
+print fva_inc_result.head()
+fva_inc_result.to_csv('toycon1_fva_result_increment.txt',sep= ' ',float_format='%.2f', quoting = csv.QUOTE_NONE,escapechar=' ',index = False)#output fva result
 
+#### Make fva_percentage plot
+
+fig = plt.figure()
+toPlot = ['R1','R2']
+i =1
+for z in toPlot:
+    plt.subplot(1,2,i)
+    xcoordl = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_lb'].values
+    xcoordu = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_ub'].values
+    ycoord = [y*32/100. for y in fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_pct'].values]
+    plt.xlim(0.0,2.0)
+    plt.xlabel("Units of Flux Through Reaction")
+    plt.ylabel("Required # of ATP Produced.")
+    plt.title(rxnID2Name[z])
+    plt.scatter(xcoordl,ycoord,color = "Red",marker="s")
+    plt.scatter(xcoordu,ycoord,color = "Red",marker = "D")
+    plt.hlines(ycoord,xcoordl,xcoordu,color = "Red")
+    i +=1
+fig.tight_layout()
+pp = PdfPages('toycon1_fva_increment.pdf')
+pp.savefig(fig)
+pp.close()
+
+fig = plt.figure()
+toPlot = [y.id for y in model.reactions]
+i =1
+for z in toPlot:
+    plt.subplot(3,3,i)
+    xcoordl = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_lb'].values
+    xcoordu = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_ub'].values
+    ycoord = [y*32/100. for y in fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_pct'].values]
+    plt.title(rxnID2Name[z])
+    plt.scatter(xcoordl,ycoord,color = "Red",marker="s",s = 3)
+    plt.scatter(xcoordu,ycoord,color = "Red",marker = "D",s = 3)
+    plt.hlines(ycoord,xcoordl,xcoordu,color = "Red",linewidths = .2)
+    i +=1
+fig.tight_layout()
+pp = PdfPages('toycon1_fva_increment_all.pdf')
+pp.savefig(fig)
+pp.close()
+
+
+#TODO NEED TO ADD COLOR (GREY TO CERTAIN LINES)
+### To line 263###########
+
+res = cobra.flux_analysis.single_gene_deletion(model)
+rxnIDs = []
+for x in res.index.values:
+    for y in model.reactions:
+        if y.gene_name_reaction_rule == x:
+            rxnIDs.append(y.id)
+res.insert(2,'rxn_id',rxnIDs)
+res = res.sort_values('rxn_id')
+toycon1_gene_ko = toycon1_rxn_info.copy()
+toycon1_gene_ko.insert(0,'gene_ko_atp',res['flux'].values)
+toycon1_gene_ko.insert(0,'gene_id',res.index.values)
+print toycon1_gene_ko
+toycon1_gene_ko.to_csv('toycon1_gene_knockout_screen.txt',sep= ' ',float_format='%d', quoting = csv.QUOTE_NONE,escapechar=' ',index = False)#output ko result
+
+### Double Gene Deletions
+
+res2ko = cobra.flux_analysis.double_gene_deletion(model,return_frame=True,number_of_processes = 1)
+print res2ko
+g1 = res2ko.index.values.tolist()
+g2 = res2ko.columns.values.tolist()
+gene_ko2_rxns = pandas.DataFrame(columns = ['genes','rxn1','rxn2','name1','name2','rxns','names','atp'])
+print gene_ko2_rxns
+for x in range(len(g1)):
+    for y in range(x):
+        temp = list()
+        temp.append(g1[x]+'_'+g2[y])
+        for z in model.reactions:
+            if z.gene_name_reaction_rule == g2[y] or z.gene_name_reaction_rule == g1[x]:
+                temp.append(z.id)
+        for z in model.reactions:
+            if z.gene_name_reaction_rule == g2[y] or z.gene_name_reaction_rule == g1[x]:
+                temp.append(z.name)
+        temp.append(temp[1]+'_'+temp[2])
+        temp.append(temp[3]+' / '+temp[4])
+        temp.append(res2ko.iloc[x,y])
+        tempDf = pandas.DataFrame({1:temp},columns = ['genes','rxn1','rxn2','name1','name2','rxns','names','atp'])
+        print tempDf
+        gene_ko2_rxns.append(tempDf,ignore_index=True)
+print gene_ko2_rxns
