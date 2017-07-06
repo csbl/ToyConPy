@@ -145,6 +145,14 @@ fva_pct_result = fva_pct_result.reset_index(drop=True)
 print fva_pct_result.head()
 fva_pct_result.to_csv('toycon1_fva_result_percentage.txt',sep= ' ',float_format='%.2f', quoting = csv.QUOTE_NONE,escapechar=' ',index = False)#output fva result
 
+
+def coloring(on,req):
+    if on and req:
+        return "Red"
+    if not req and on:
+        return "Grey"
+    else:
+        return "Blue"
 #### Make fva_percentage plot
 
 #fva_pct_resultTemp = fva_pct_result['rxn_id'] == 'R1'
@@ -154,6 +162,8 @@ toPlot = ['R1','R2']
 i =1
 for z in toPlot:
     plt.subplot(1,2,i)
+    req = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_req'].values
+    on = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_on'].values
     xcoordl = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_lb'].values
     xcoordu = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_ub'].values
     ycoord = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_pct'].values
@@ -161,9 +171,9 @@ for z in toPlot:
     plt.ylabel("Required Flux Through Obj. Fun.")
     plt.xlim(0.0,2.0)
     plt.title(rxnID2Name[z])
-    plt.scatter(xcoordl,ycoord,color = "Red",marker="s")
-    plt.scatter(xcoordu,ycoord,color = "Red",marker = "D")
-    plt.hlines(ycoord,xcoordl,xcoordu,color = "Red")
+    plt.scatter(xcoordl,ycoord,color = [coloring(x,y) for x,y in zip(on,req)],marker="s")
+    plt.scatter(xcoordu,ycoord,color = [coloring(x,y) for x,y in zip(on,req)],marker = "D")
+    plt.hlines(ycoord,xcoordl,xcoordu,color = [coloring(x,y) for x,y in zip(on,req)])
     i +=1
 fig.tight_layout()
 pp = PdfPages('toycon1_fva_percentage.pdf')
@@ -179,13 +189,15 @@ fva_inc_result = fva_inc_result.reset_index(drop=True)
 print fva_inc_result.head()
 fva_inc_result.to_csv('toycon1_fva_result_increment.txt',sep= ' ',float_format='%.2f', quoting = csv.QUOTE_NONE,escapechar=' ',index = False)#output fva result
 
-#### Make fva_percentage plot
+#### Make fva_inc plot
 
 fig = plt.figure()
 toPlot = ['R1','R2']
 i =1
 for z in toPlot:
     plt.subplot(1,2,i)
+    req = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_req'].values
+    on = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_on'].values
     xcoordl = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_lb'].values
     xcoordu = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_ub'].values
     ycoord = [y*32/100. for y in fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_pct'].values]
@@ -193,9 +205,9 @@ for z in toPlot:
     plt.xlabel("Units of Flux Through Reaction")
     plt.ylabel("Required # of ATP Produced.")
     plt.title(rxnID2Name[z])
-    plt.scatter(xcoordl,ycoord,color = "Red",marker="s")
-    plt.scatter(xcoordu,ycoord,color = "Red",marker = "D")
-    plt.hlines(ycoord,xcoordl,xcoordu,color = "Red")
+    plt.scatter(xcoordl,ycoord,color = [coloring(x,y) for x,y in zip(on,req)],marker="s")
+    plt.scatter(xcoordu,ycoord,color = [coloring(x,y) for x,y in zip(on,req)],marker = "D")
+    plt.hlines(ycoord,xcoordl,xcoordu,color = [coloring(x,y) for x,y in zip(on,req)])
     i +=1
 fig.tight_layout()
 pp = PdfPages('toycon1_fva_increment.pdf')
@@ -207,13 +219,15 @@ toPlot = [y.id for y in model.reactions]
 i =1
 for z in toPlot:
     plt.subplot(3,3,i)
+    req = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_req'].values
+    on = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_on'].values
     xcoordl = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_lb'].values
     xcoordu = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_ub'].values
     ycoord = [y*32/100. for y in fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_pct'].values]
     plt.title(rxnID2Name[z])
-    plt.scatter(xcoordl,ycoord,color = "Red",marker="s",s = 3)
-    plt.scatter(xcoordu,ycoord,color = "Red",marker = "D",s = 3)
-    plt.hlines(ycoord,xcoordl,xcoordu,color = "Red",linewidths = .2)
+    plt.scatter(xcoordl,ycoord,color = [coloring(x,y) for x,y in zip(on,req)],marker="s",s = 3)
+    plt.scatter(xcoordu,ycoord,color = [coloring(x,y) for x,y in zip(on,req)],marker = "D",s = 3)
+    plt.hlines(ycoord,xcoordl,xcoordu,color = [coloring(x,y) for x,y in zip(on,req)],linewidths = .2)
     i +=1
 fig.tight_layout()
 pp = PdfPages('toycon1_fva_increment_all.pdf')
@@ -244,7 +258,7 @@ res2ko = cobra.flux_analysis.double_gene_deletion(model,return_frame=True,number
 print res2ko
 g1 = res2ko.index.values.tolist()
 g2 = res2ko.columns.values.tolist()
-gene_ko2_rxns = pandas.DataFrame(columns = ['genes','rxn1','rxn2','name1','name2','rxns','names','atp'])
+gene_ko2_rxnsT = pandas.DataFrame(columns = ['genes','rxn1','rxn2','name1','name2','rxns','names','atp'])
 #print gene_ko2_rxns
 i = 0
 for x in range(len(g1)):
@@ -259,9 +273,29 @@ for x in range(len(g1)):
                 temp.append(z.name)
         temp.append(temp[1]+'_'+temp[2])
         temp.append(temp[3]+' / '+temp[4])
-        temp.append(res2ko.iloc[x,y])
+        temp.append(round(res2ko.iloc[x,y],1))
         #tempDf = pandas.DataFrame({1:temp},columns = ['genes','rxn1','rxn2','name1','name2','rxns','names','atp'])
        # print tempDf
-        gene_ko2_rxns.loc[i] = temp
+        gene_ko2_rxnsT.loc[i] = temp
         i += 1
-print gene_ko2_rxns
+gene_ko2_rxns = gene_ko2_rxnsT.copy().drop('atp',1).sort_values("genes").reset_index(drop=True)
+gene_ko2_rxns.to_csv('toycon1_gene_2ko_rxns.txt',sep= ' ',float_format='%d', quoting = csv.QUOTE_NONE,escapechar=' ',index = False)#output ko result
+
+print gene_ko2_rxns.head()
+
+gene_ko2_tbl = gene_ko2_rxnsT.copy().drop('atp',1)
+gene_ko2_tbl.insert(1,'atp',gene_ko2_rxnsT['atp'].values)
+atp1 = []
+atp2 = []
+for x,y in zip(gene_ko2_tbl['rxn1'].values,gene_ko2_tbl['rxn2'].values):
+    atp1.append(toycon1_gene_ko.loc[toycon1_gene_ko["rxn_id"]== x]['gene_ko_atp'].values[0])
+    atp2.append(toycon1_gene_ko.loc[toycon1_gene_ko["rxn_id"]== y]['gene_ko_atp'].values[0])
+gene_ko2_tbl.insert(8,"atp1",atp1)
+gene_ko2_tbl.insert(9,"atp2",atp2)
+gene_ko2_tbl.insert(10,"atp12",gene_ko2_tbl['atp'].values) #might not be necessary
+
+gene_ko2_tbl = gene_ko2_tbl.sort_values("rxns").reset_index(drop = True)
+print gene_ko2_tbl.head()
+gene_ko2_tbl.to_csv('toycon1_gene_2ko_tbl.txt',sep= ' ',float_format='%d', quoting = csv.QUOTE_NONE,escapechar= ' ',index = False)
+filtered_ko2 = gene_ko2_tbl.query('atp12 < atp1 and atp12 < atp2').reset_index(drop=True)
+print filtered_ko2
