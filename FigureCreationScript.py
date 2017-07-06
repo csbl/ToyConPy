@@ -1,12 +1,18 @@
+"""This python script generates pdf documents that contain the figures associated with the ToyCon1 model. Such figures
+are summaries of the reactions, genes, and simulations performed (gene KOs, FVA). Running this script requires that
+the following packages are installed:
+    COBRApy
+    numpy
+    pandas
+    csv
+    matplotlib
+The program also assumes that the script SMBLToyConModelCreator.py has been previously run."""
 import cobra.io
 import cobra.core.arraybasedmodel
 import numpy
 import pandas
 import csv
-import ggplot
-from ggplot import *
 import matplotlib.pyplot as plt
-import matplotlib.axes
 import matplotlib.colors
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -100,11 +106,9 @@ plt.xticks(range(len(rxnUniques)),[rxnID2Name[x] for x in rxnUniques],rotation =
 [plt.text(xedge[x]+.5,yedge[y]+.5,l,color = 'White',ha = 'center', va = 'center') for x,y,l in zip(toycon1_rxn_decomposition2['x'].values,toycon1_rxn_decomposition2['y'].values,toycon1_rxn_decomposition2['l'].values)]
 plt.subplots_adjust(bottom = .25)
 plt.tick_params(axis = u'both',which = u'both',length = 0)
-#plt.show() #TODO: uncomment
 pp = PdfPages('toycon1_smatrix.pdf')
 pp.savefig(fig)
 pp.close()
-##To line 164 on R
 
 #function to run FVA with inputs of a required percentage, model, and table to add results
 
@@ -155,8 +159,6 @@ def coloring(on,req):
         return "Blue"
 #### Make fva_percentage plot
 
-#fva_pct_resultTemp = fva_pct_result['rxn_id'] == 'R1'
-#print fva_pct_resultTemp.head()
 fig = plt.figure()
 toPlot = ['R1','R2']
 i =1
@@ -179,7 +181,6 @@ fig.tight_layout()
 pp = PdfPages('toycon1_fva_percentage.pdf')
 pp.savefig(fig)
 pp.close()
-###through line 213
 
 fva_inc_result = ef_tbl_fva(0,model,toycon1_rxn_info)
 for x in [(y+1)/16. for y in range(16)]:
@@ -234,10 +235,6 @@ pp = PdfPages('toycon1_fva_increment_all.pdf')
 pp.savefig(fig)
 pp.close()
 
-
-#TODO NEED TO ADD COLOR (GREY TO CERTAIN LINES)
-### To line 263###########
-
 res = cobra.flux_analysis.single_gene_deletion(model)
 rxnIDs = []
 for x in res.index.values:
@@ -274,8 +271,6 @@ for x in range(len(g1)):
         temp.append(temp[1]+'_'+temp[2])
         temp.append(temp[3]+' / '+temp[4])
         temp.append(round(res2ko.iloc[x,y],1))
-        #tempDf = pandas.DataFrame({1:temp},columns = ['genes','rxn1','rxn2','name1','name2','rxns','names','atp'])
-       # print tempDf
         gene_ko2_rxnsT.loc[i] = temp
         i += 1
 gene_ko2_rxns = gene_ko2_rxnsT.copy().drop('atp',1).sort_values("genes").reset_index(drop=True)
@@ -295,7 +290,9 @@ gene_ko2_tbl.insert(9,"atp2",atp2)
 gene_ko2_tbl.insert(10,"atp12",gene_ko2_tbl['atp'].values) #might not be necessary
 
 gene_ko2_tbl = gene_ko2_tbl.sort_values("rxns").reset_index(drop = True)
-print gene_ko2_tbl.head()
+print gene_ko2_tbl.head() #remove .head() to see the full table
 gene_ko2_tbl.to_csv('toycon1_gene_2ko_tbl.txt',sep= ' ',float_format='%d', quoting = csv.QUOTE_NONE,escapechar= ' ',index = False)
 filtered_ko2 = gene_ko2_tbl.query('atp12 < atp1 and atp12 < atp2').reset_index(drop=True)
 print filtered_ko2
+
+plt.show()
