@@ -245,7 +245,8 @@ print res2ko
 g1 = res2ko.index.values.tolist()
 g2 = res2ko.columns.values.tolist()
 gene_ko2_rxns = pandas.DataFrame(columns = ['genes','rxn1','rxn2','name1','name2','rxns','names','atp'])
-print gene_ko2_rxns
+#print gene_ko2_rxns
+i = 0
 for x in range(len(g1)):
     for y in range(x):
         temp = list()
@@ -259,7 +260,8 @@ for x in range(len(g1)):
         temp.append(temp[1]+'_'+temp[2])
         temp.append(temp[3]+' / '+temp[4])
         temp.append(res2ko.iloc[x,y])
-        tempDf = pandas.DataFrame({1:temp},columns = ['genes','rxn1','rxn2','name1','name2','rxns','names','atp'])
-        print tempDf
-        gene_ko2_rxns.append(tempDf,ignore_index=True)
+        #tempDf = pandas.DataFrame({1:temp},columns = ['genes','rxn1','rxn2','name1','name2','rxns','names','atp'])
+       # print tempDf
+        gene_ko2_rxns.loc[i] = temp
+        i += 1
 print gene_ko2_rxns
