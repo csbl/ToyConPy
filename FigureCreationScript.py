@@ -105,7 +105,8 @@ fig = plt.figure()  ##Create S matrix figure and save as a pdf
 counts, xedge, yedge, imag = plt.hist2d(bins = [len(rxnUniques),len(metUniques)],x=toycon1_rxn_decomposition2['x'].values,y=toycon1_rxn_decomposition2['y'].values,normed = False,weights = toycon1_rxn_decomposition2['w'].values,cmap = matplotlib.colors.LinearSegmentedColormap.from_list("custom",[(0,'White'),(.5,'dodgerblue'),(1,'firebrick')]))
 #format axis labels and ticks
 plt.yticks(range(len(metUniques)),[int2metName[x] for x in range(len(metUniques))])
-plt.xticks(range(len(rxnUniques)),[rxnID2Name[x] for x in rxnUniques],rotation = 45)
+plt.xticks([x * .95 for x in range(len(rxnUniques))],[rxnID2Name[x] for x in rxnUniques],rotation = 50)
+
 #add the coefficient as the label
 [plt.text(xedge[x]+.5,yedge[y]+.5,l,color = 'White',ha = 'center', va = 'center') for x,y,l in zip(toycon1_rxn_decomposition2['x'].values,toycon1_rxn_decomposition2['y'].values,toycon1_rxn_decomposition2['l'].values)]
 plt.subplots_adjust(bottom = .25)
