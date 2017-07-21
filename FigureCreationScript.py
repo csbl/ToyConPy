@@ -63,7 +63,7 @@ toycon1_rxn_info.to_csv('toycon1_rxn_info.txt',sep = ' ',float_format='%d',quoti
 print 'The first 6 entries of the toycon1_rxn_info'
 print toycon1_rxn_info.head(6) #output first 6 lines
 
-########################Perform FBA###############################
+
 print 'Objective Reaction is: '
 print toycon1_rxn_info[toycon1_rxn_info.rxn_id == 'R4'].rxn_id + '  ' + toycon1_rxn_info[toycon1_rxn_info.rxn_id == 'R4'].rxn_formula##Print objective reaction
 
@@ -126,7 +126,7 @@ def ef_tbl_fva(pct,model,tbl = None):
     tbl.insert(1,'fva_lb', lb)
     tbl.insert(2,'fva_ub', ub) #insert bounds into the dataframe
     tbl['fva_pct'] = list([int(z+pct*100) for z in numpy.zeros((n,1),numpy.int64)]) #insert percentage of obj. fun. into dataframe
-    def fva_req(u,l): #Function to determine if FVA is required
+    def fva_req(u,l): #Function to determine if FVA is required(if one of the upper or lower bounds in either greater than 10^9 or -10^9 respectivly
         result = []
         for x,y in zip(u,l):
             if y > 1*10**-9 or x < -1*10**-9:
@@ -135,7 +135,7 @@ def ef_tbl_fva(pct,model,tbl = None):
                 result.append(False)
         return result
     tbl['fva_req'] = fva_req(ub,lb) #insert column with the determination
-    def fva_on(u, l): #determine if FVA is on (not sure what this means) TODO
+    def fva_on(u, l): #determine if FVA is on (one of the upper or lower bound must have an absolute value greater than 10^-9
         result = []
         for x, y in zip(u, l):
             if abs(y) > 1 * 10 ** -9 or abs(x) > 1 * 10 ** -9:
@@ -166,34 +166,35 @@ def coloring(on,req):
 #### Make fva_percentage plot
 
 fig = plt.figure()
-toPlot = ['R1','R2']
+toPlot = ['R1','R2']#the two reaction to plot the FVA result dependency on the percentage of the objective function
 i =1
 for z in toPlot:
     plt.subplot(1,2,i)
-    req = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_req'].values
-    on = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_on'].values
+    req = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_req'].values#grab fva_req value
+    on = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_on'].values#grab fva_on values
     xcoordl = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_lb'].values
-    xcoordu = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_ub'].values
+    xcoordu = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_ub'].values#Grab upper, lower bounds,  and perctage
     ycoord = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_pct'].values
     plt.xlabel("Units of Flux Through Reaction")
-    plt.ylabel("Required Flux Through Obj. Fun.")
+    plt.ylabel("Required Flux Through Obj. Fun.") #plot results
     plt.xlim(0.0,2.0)
     plt.title(rxnID2Name[z])
     plt.scatter(xcoordl,ycoord,color = [coloring(x,y) for x,y in zip(on,req)],marker="s")
     plt.scatter(xcoordu,ycoord,color = [coloring(x,y) for x,y in zip(on,req)],marker = "D")
     plt.hlines(ycoord,xcoordl,xcoordu,color = [coloring(x,y) for x,y in zip(on,req)])
     i +=1
-fig.tight_layout()
-pp = PdfPages('toycon1_fva_percentage.pdf')
+fig.tight_layout()#adjust layout
+pp = PdfPages('toycon1_fva_percentage.pdf')#save figure
 pp.savefig(fig)
 pp.close()
-
-fva_inc_result = ef_tbl_fva(0,model,toycon1_rxn_info)
+### perform FVA with atp incremented requirements
+fva_inc_result = ef_tbl_fva(0,model,toycon1_rxn_info) #perform initial simulation
 for x in [(y+1)/16. for y in range(16)]:
-    fva_inc_result = fva_inc_result.append(ef_tbl_fva(x,model,toycon1_rxn_info),ignore_index = True)
+    fva_inc_result = fva_inc_result.append(ef_tbl_fva(x,model,toycon1_rxn_info),ignore_index = True) #perform rest of simulation incrementing by 2 atp
 fva_inc_result = fva_inc_result.sort_values(by = 'rxn_id')
-fva_inc_result = fva_inc_result.reset_index(drop=True)
-print fva_inc_result.head()
+fva_inc_result = fva_inc_result.reset_index(drop=True) #sort results
+print fva_inc_result.head() #print first few lines
+#save results
 fva_inc_result.to_csv('toycon1_fva_result_increment.txt',sep= ' ',float_format='%.2f', quoting = csv.QUOTE_NONE,escapechar=' ',index = False)#output fva result
 
 #### Make fva_inc plot
@@ -204,10 +205,10 @@ i =1
 for z in toPlot:
     plt.subplot(1,2,i)
     req = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_req'].values
-    on = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_on'].values
+    on = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_on'].values#grab values as above
     xcoordl = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_lb'].values
     xcoordu = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_ub'].values
-    ycoord = [y*32/100. for y in fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_pct'].values]
+    ycoord = [y*32/100. for y in fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_pct'].values] #plot results
     plt.xlim(0.0,2.0)
     plt.xlabel("Units of Flux Through Reaction")
     plt.ylabel("Required # of ATP Produced.")
@@ -218,14 +219,15 @@ for z in toPlot:
     i +=1
 fig.tight_layout()
 pp = PdfPages('toycon1_fva_increment.pdf')
-pp.savefig(fig)
+pp.savefig(fig) #save figure
 pp.close()
-
+#create fva_inc plot for all reactions
 fig = plt.figure()
-toPlot = [y.id for y in model.reactions]
+toPlot = [y.id for y in model.reactions]#grab all reactions
 i =1
 for z in toPlot:
     plt.subplot(3,3,i)
+    #grab appropriate data, and plot the results
     req = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_req'].values
     on = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_on'].values
     xcoordl = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_lb'].values
@@ -236,69 +238,69 @@ for z in toPlot:
     plt.scatter(xcoordu,ycoord,color = [coloring(x,y) for x,y in zip(on,req)],marker = "D",s = 3)
     plt.hlines(ycoord,xcoordl,xcoordu,color = [coloring(x,y) for x,y in zip(on,req)],linewidths = .2)
     i +=1
-fig.tight_layout()
-pp = PdfPages('toycon1_fva_increment_all.pdf')
+fig.tight_layout()#format layout
+pp = PdfPages('toycon1_fva_increment_all.pdf')#save result
 pp.savefig(fig)
 pp.close()
-
+######Perform Single Gene Deletion######
 res = cobra.flux_analysis.single_gene_deletion(model)
 rxnIDs = []
 for x in res.index.values:
     for y in model.reactions:
         if y.gene_name_reaction_rule == x:
-            rxnIDs.append(y.id)
-res.insert(2,'rxn_id',rxnIDs)
-res = res.sort_values('rxn_id')
-toycon1_gene_ko = toycon1_rxn_info.copy()
-toycon1_gene_ko.insert(0,'gene_ko_atp',res['flux'].values)
+            rxnIDs.append(y.id) #match reactions and flux changes, to create same ordering
+res.insert(2,'rxn_id',rxnIDs) #insert matching rxn IDs
+res = res.sort_values('rxn_id') #sort values
+toycon1_gene_ko = toycon1_rxn_info.copy() #make copy of rxn_info dataframe
+toycon1_gene_ko.insert(0,'gene_ko_atp',res['flux'].values) #insert results into dataframe
 toycon1_gene_ko.insert(0,'gene_id',res.index.values)
-print toycon1_gene_ko
+print toycon1_gene_ko #print dataframe
+#save result
 toycon1_gene_ko.to_csv('toycon1_gene_knockout_screen.txt',sep= ' ',float_format='%d', quoting = csv.QUOTE_NONE,escapechar=' ',index = False)#output ko result
 
-### Double Gene Deletions
+### Double Gene Deletions#########
 
-res2ko = cobra.flux_analysis.double_gene_deletion(model,return_frame=True,number_of_processes = 1)
-print res2ko
-g1 = res2ko.index.values.tolist()
+res2ko = cobra.flux_analysis.double_gene_deletion(model,return_frame=True,number_of_processes = 1)#perform double gene deletions (# of processes is dependent on system's cpu count
+print res2ko#print result
+g1 = res2ko.index.values.tolist()#make gene lists
 g2 = res2ko.columns.values.tolist()
-gene_ko2_rxnsT = pandas.DataFrame(columns = ['genes','rxn1','rxn2','name1','name2','rxns','names','atp'])
-#print gene_ko2_rxns
+gene_ko2_rxnsT = pandas.DataFrame(columns = ['genes','rxn1','rxn2','name1','name2','rxns','names','atp'])#create new data frame
 i = 0
 for x in range(len(g1)):
     for y in range(x):
         temp = list()
-        temp.append(g1[x]+'_'+g2[y])
+        temp.append(g1[x]+'_'+g2[y])#gather genes deleted
         for z in model.reactions:
             if z.gene_name_reaction_rule == g2[y] or z.gene_name_reaction_rule == g1[x]:
-                temp.append(z.id)
+                temp.append(z.id) #get matching reaction
         for z in model.reactions:
             if z.gene_name_reaction_rule == g2[y] or z.gene_name_reaction_rule == g1[x]:
-                temp.append(z.name)
-        temp.append(temp[1]+'_'+temp[2])
-        temp.append(temp[3]+' / '+temp[4])
-        temp.append(round(res2ko.iloc[x,y],1))
-        gene_ko2_rxnsT.loc[i] = temp
+                temp.append(z.name) #get matching reaction
+        temp.append(temp[1]+'_'+temp[2]) #append combined gene names
+        temp.append(temp[3]+' / '+temp[4]) #append combines rxn names
+        temp.append(round(res2ko.iloc[x,y],1)) #append result of deletion
+        gene_ko2_rxnsT.loc[i] = temp #add to dataframe
         i += 1
-gene_ko2_rxns = gene_ko2_rxnsT.copy().drop('atp',1).sort_values("genes").reset_index(drop=True)
+gene_ko2_rxns = gene_ko2_rxnsT.copy().drop('atp',1).sort_values("genes").reset_index(drop=True)#sort values
 gene_ko2_rxns.to_csv('toycon1_gene_2ko_rxns.txt',sep= ' ',float_format='%d', quoting = csv.QUOTE_NONE,escapechar=' ',index = False)#output ko result
 
-print gene_ko2_rxns.head()
+print gene_ko2_rxns.head()#print first few lines of dataframe
 
 gene_ko2_tbl = gene_ko2_rxnsT.copy().drop('atp',1)
-gene_ko2_tbl.insert(1,'atp',gene_ko2_rxnsT['atp'].values)
+gene_ko2_tbl.insert(1,'atp',gene_ko2_rxnsT['atp'].values)#move ordering of dataframe to make new dataframe
 atp1 = []
 atp2 = []
 for x,y in zip(gene_ko2_tbl['rxn1'].values,gene_ko2_tbl['rxn2'].values):
-    atp1.append(toycon1_gene_ko.loc[toycon1_gene_ko["rxn_id"]== x]['gene_ko_atp'].values[0])
+    atp1.append(toycon1_gene_ko.loc[toycon1_gene_ko["rxn_id"]== x]['gene_ko_atp'].values[0])#find matching atp affect for individual ko
     atp2.append(toycon1_gene_ko.loc[toycon1_gene_ko["rxn_id"]== y]['gene_ko_atp'].values[0])
 gene_ko2_tbl.insert(8,"atp1",atp1)
-gene_ko2_tbl.insert(9,"atp2",atp2)
-gene_ko2_tbl.insert(10,"atp12",gene_ko2_tbl['atp'].values) #might not be necessary
+gene_ko2_tbl.insert(9,"atp2",atp2)#insert results
+gene_ko2_tbl.insert(10,"atp12",gene_ko2_tbl['atp'].values) #insert double ko results
 
-gene_ko2_tbl = gene_ko2_tbl.sort_values("rxns").reset_index(drop = True)
-print gene_ko2_tbl.head() #remove .head() to see the full table
-gene_ko2_tbl.to_csv('toycon1_gene_2ko_tbl.txt',sep= ' ',float_format='%d', quoting = csv.QUOTE_NONE,escapechar= ' ',index = False)
-filtered_ko2 = gene_ko2_tbl.query('atp12 < atp1 and atp12 < atp2').reset_index(drop=True)
-print filtered_ko2
+gene_ko2_tbl = gene_ko2_tbl.sort_values("rxns").reset_index(drop = True) #sort dataframe
+print gene_ko2_tbl.head() #print first few liens
+gene_ko2_tbl.to_csv('toycon1_gene_2ko_tbl.txt',sep= ' ',float_format='%d', quoting = csv.QUOTE_NONE,escapechar= ' ',index = False) #save the result
+filtered_ko2 = gene_ko2_tbl.query('atp12 < atp1 and atp12 < atp2').reset_index(drop=True) #filter results to show reactions where the double deletion had a greater effect than either single deletion
+print filtered_ko2 #print filtered results
 
-plt.show()
+plt.show() #display figures
