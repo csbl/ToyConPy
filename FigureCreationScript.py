@@ -87,9 +87,7 @@ metUniques,indexMet,invMet=numpy.unique(toycon1_rxn_decomposition['met_name'].va
 rxnID2Name = pandas.Series(toycon1_rxn_info.rxn_name.values,index = toycon1_rxn_info.rxn_id).to_dict()
 metName2int = pandas.Series([(len(model.metabolites)-1) - x for x in range(len(model.metabolites))],index = [x.name+'['+x.compartment+']' for x in model.metabolites]).to_dict()
 int2metName = pandas.Series([x.name+'['+x.compartment+']' for x in model.metabolites],index = [(len(model.metabolites)-1) - x for x in range(len(model.metabolites))]).to_dict()
-print rxnUniques
-print indexRxn
-print invRxn
+
 #create y coordinates for table from metabolic names
 yCor = [metName2int[x] for x in toycon1_rxn_decomposition['met_name'].values]
 #set coloring scheme
@@ -101,11 +99,10 @@ for i in range(len(invRxn)):
     else:
         invRxn[i]  -= 5
 temp = list(rxnUniques)
-rxnUniques[4:8] = temp[0:4]
-rxnUniques[0:3] = temp[5:8]
-print rxnUniques
-print indexRxn
-print invRxn
+rxnUniques = list(rxnUniques)
+rxnUniques[0:4] = temp[5:9]
+rxnUniques[4:9] = temp[0:5]
+
 #create data
 toycon1_rxn_decomposition2 = pandas.DataFrame({
     'w' : sign(toycon1_rxn_decomposition['coeff'].values),
