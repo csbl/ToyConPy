@@ -14,6 +14,7 @@ import cobra.core.arraybasedmodel
 import numpy
 import pandas
 import csv
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors
 from matplotlib.backends.backend_pdf import PdfPages
@@ -177,7 +178,7 @@ for z in toPlot:
     ycoord = fva_pct_result.loc[fva_pct_result['rxn_id'] == z]['fva_pct'].values
     plt.xlabel("Units of Flux Through Reaction")
     plt.ylabel("Required Flux Through Obj. Fun.") #plot results
-    plt.xlim(0.0,2.0)
+    plt.xlim(-0.2,2.2)
     plt.title(rxnID2Name[z])
     plt.scatter(xcoordl,ycoord,color = [coloring(x,y) for x,y in zip(on,req)],marker="s")
     plt.scatter(xcoordu,ycoord,color = [coloring(x,y) for x,y in zip(on,req)],marker = "D")
@@ -209,7 +210,7 @@ for z in toPlot:
     xcoordl = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_lb'].values
     xcoordu = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_ub'].values
     ycoord = [y*32/100. for y in fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_pct'].values] #plot results
-    plt.xlim(0.0,2.0)
+    plt.xlim(-0.2,2.2)
     plt.xlabel("Units of Flux Through Reaction")
     plt.ylabel("Required # of ATP Produced.")
     plt.title(rxnID2Name[z])
@@ -225,6 +226,8 @@ pp.close()
 fig = plt.figure()
 toPlot = [y.id for y in model.reactions]#grab all reactions
 i =1
+matplotlib.rc('xtick', labelsize=4)
+matplotlib.rc('ytick', labelsize=4)
 for z in toPlot:
     plt.subplot(3,3,i)
     #grab appropriate data, and plot the results
@@ -233,7 +236,9 @@ for z in toPlot:
     xcoordl = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_lb'].values
     xcoordu = fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_ub'].values
     ycoord = [y*32/100. for y in fva_inc_result.loc[fva_inc_result['rxn_id'] == z]['fva_pct'].values]
-    plt.title(rxnID2Name[z])
+    plt.title(rxnID2Name[z],fontsize = 10)
+    plt.xlabel("Units of Flux Through Reaction",fontsize  = 5)
+    plt.ylabel("Required # of ATP Produced.",fontsize = 5)
     plt.scatter(xcoordl,ycoord,color = [coloring(x,y) for x,y in zip(on,req)],marker="s",s = 3)
     plt.scatter(xcoordu,ycoord,color = [coloring(x,y) for x,y in zip(on,req)],marker = "D",s = 3)
     plt.hlines(ycoord,xcoordl,xcoordu,color = [coloring(x,y) for x,y in zip(on,req)],linewidths = .2)
